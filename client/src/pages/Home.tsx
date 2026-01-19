@@ -1,31 +1,84 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { FileText, Upload } from "lucide-react";
 import { getLoginUrl } from "@/const";
-import { Streamdown } from 'streamdown';
+import { useLocation } from "wouter";
 
-/**
- * All content in this page are only for example, replace with your own feature implementation
- * When building pages, remember your instructions in Frontend Workflow, Frontend Best Practices, Design Guide and Common Pitfalls
- */
 export default function Home() {
-  // The userAuth hooks provides authentication state
-  // To implement login/logout functionality, simply call logout() or redirect to getLoginUrl()
-  let { user, loading, error, isAuthenticated, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const [, navigate] = useLocation();
 
-  // If theme is switchable in App.tsx, we can implement theme toggling like this:
-  // const { theme, toggleTheme } = useTheme();
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <FileText className="w-12 h-12 mx-auto mb-4 text-indigo-600" />
+            <CardTitle className="text-2xl">Document Processor</CardTitle>
+            <CardDescription>Convert, translate, and process your documents</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button asChild className="w-full">
+              <a href={getLoginUrl()}>Sign In to Get Started</a>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <main>
-        {/* Example: lucide-react for icons */}
-        <Loader2 className="animate-spin" />
-        Example Page
-        {/* Example: Streamdown for markdown rendering */}
-        <Streamdown>Any **markdown** content</Streamdown>
-        <Button variant="default">Example Button</Button>
-      </main>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        <Card>
+          <CardHeader className="text-center">
+            <FileText className="w-16 h-16 mx-auto mb-4 text-indigo-600" />
+            <CardTitle className="text-3xl">Document Processor</CardTitle>
+            <CardDescription>Convert, translate, and process your documents with ease</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid md:grid-cols-3 gap-4">
+              <Card>
+                <CardHeader>
+                  <Upload className="w-8 h-8 text-indigo-600 mb-2" />
+                  <CardTitle className="text-lg">Upload</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600">Drag and drop or select your PDF, DOCX, or XLSX files</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <FileText className="w-8 h-8 text-indigo-600 mb-2" />
+                  <CardTitle className="text-lg">Process</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600">Extract text, apply OCR, and translate between languages</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <FileText className="w-8 h-8 text-indigo-600 mb-2" />
+                  <CardTitle className="text-lg">Download</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-gray-600">Convert to your desired format and download the result</p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="text-center pt-4">
+              <Button size="lg" onClick={() => navigate('/processor')}>
+                <Upload className="w-4 h-4 mr-2" />
+                Start Processing
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

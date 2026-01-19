@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, documents, processingHistory } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,128 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+/**
+ * Document queries
+ */
+export async function createDocument(
+  userId: number,
+  originalFileName: string,
+  originalFileKey: string,
+  originalFileUrl: string,
+  fileType: string,
+  fileSize: number,
+  isScan: boolean,
+  extractedText?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(documents).values({
+    userId,
+    originalFileName,
+    originalFileKey,
+    originalFileUrl,
+    fileType,
+    fileSize,
+    isScan: isScan ? 1 : 0,
+    extractedText,
+  });
+
+  return result;
+}
+
+export async function getDocumentById(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .select()
+    .from(documents)
+    .where(eq(documents.id, id))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getUserDocuments(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(documents)
+    .where(eq(documents.userId, userId))
+    .orderBy((t) => t.createdAt);
+}
+
+/**
+ * Processing history queries
+ */
+export async function createProcessingHistory(
+  documentId: number,
+  userId: number,
+  outputFormat: string,
+  processedFileKey: string,
+  processedFileUrl: string,
+  processedText?: string,
+  translateFrom?: string,
+  translateTo?: string,
+  ocrLanguages?: string,
+  preserveStructure?: boolean
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(processingHistory).values({
+    documentId,
+    userId,
+    outputFormat,
+    processedFileKey,
+    processedFileUrl,
+    processedText,
+    translateFrom: translateFrom || 'none',
+    translateTo: translateTo || 'none',
+    ocrLanguages: ocrLanguages || 'eng,rus,uzb',
+    preserveStructure: preserveStructure !== false ? 1 : 0,
+    status: 'pending',
+  });
+
+  return result;
+}
+
+export async function updateProcessingStatus(
+  id: number,
+  status: 'pending' | 'processing' | 'completed' | 'failed',
+  errorMessage?: string
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const updateData: any = {
+    status,
+  };
+
+  if (status === 'completed') {
+    updateData.completedAt = new Date();
+  }
+
+  if (errorMessage) {
+    updateData.errorMessage = errorMessage;
+  }
+
+  return await db
+    .update(processingHistory)
+    .set(updateData)
+    .where(eq(processingHistory.id, id));
+}
+
+export async function getProcessingHistoryByDocId(documentId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(processingHistory)
+    .where(eq(processingHistory.documentId, documentId))
+    .orderBy((t) => t.createdAt);
+}
